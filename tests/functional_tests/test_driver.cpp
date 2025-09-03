@@ -137,12 +137,36 @@ int main(int argc, char *argv[]) {
   /***
    * Select a GPU
    */
-  char* ompi_local_rank = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-  if (nullptr == ompi_local_rank) {
-    printf("Could not determine local rank, use Open MPI `mpiexec`\n");
-    abort();
+  int rank, local_rank, is_initialized = 0, provided;
+
+  CHECK_MPI(MPI_Initialized(&is_initialized));
+  if (! is_initialized)
+    CHECK_MPI(MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided));
+   
+  CHECK_MPI(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
+
+  /**
+   * Find the local MPI rank number
+   */
+  MPI_Comm local_comm;
+  CHECK_MPI(MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED,
+                                rank, MPI_INFO_NULL, &local_comm));
+  CHECK_MPI(MPI_Comm_rank(local_comm, &local_rank));
+
+  /**
+   * When either ROCR_VISIBLE_DEVICES or HIP_VISIBLE_DEVICES is set, hipSetDevice 
+   * can be set to zero.
+   */
+  char *local_device;
+  if ((local_device = getenv("ROCR_VISIBLE_DEVICES")) != NULL) {
+    CHECK_HIP(hipSetDevice(0));
+  } else if ((local_device = getenv("HIP_VISIBLE_DEVICES")) != NULL) {
+    CHECK_HIP(hipSetDevice(0));
+  } else {
+    CHECK_HIP(hipSetDevice(local_rank));
   }
-  CHECK_HIP(hipSetDevice(atoi(ompi_local_rank)));
+
+  CHECK_MPI(MPI_Comm_free(&local_comm));
 
   /**
    * Must initialize rocshmem to access arguments needed by the tester.
