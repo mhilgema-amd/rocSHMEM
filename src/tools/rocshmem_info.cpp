@@ -130,6 +130,20 @@ void print_mpi_info() {
   snprintf(mpi_version, sizeof(mpi_version), "%d.%d.%d",
            OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION);
   PRINT_ENTRY("Open MPI", mpi_version);
+#elif defined(CRAY_MPICH_VERSION)
+/**
+ * CRAY_MPICH_VERSION is defined as a numeric literal with an invalid syntax,
+ * therefore, we need to convert it to a string literal.
+ */
+#define STR_HELPER(x) #x
+#define CRAY_MPICH_VERSION_STR STR_HELPER(CRAY_MPICH_VERSION)
+  char mpi_version[12];
+  snprintf(mpi_version, sizeof(mpi_version), "%s", CRAY_MPICH_VERSION_STR);
+  PRINT_ENTRY("Cray MPI", mpi_version);
+#elif defined(MPICH_VERSION)
+  char mpi_version[8];
+  snprintf(mpi_version, sizeof(mpi_version), "%s", MPICH_VERSION);
+  PRINT_ENTRY("MPICH", mpi_version);
 #else
   PRINT_ENTRY("MPI ", "Unsupported MPI Library");
 #endif
