@@ -28,11 +28,11 @@ namespace rocshmem {
 
 MPIInstance::MPIInstance(MPI_Comm comm) {
   int is_init{0};
-  MPI_Initialized(&is_init);
+  CHECK_MPI(MPI_Initialized(&is_init));
 
   if (!is_init) {
     int provided;
-    MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
+    CHECK_MPI(MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided));
     init_in_this_class = 1;
   }
 
@@ -40,15 +40,15 @@ MPIInstance::MPIInstance(MPI_Comm comm) {
     comm = MPI_COMM_WORLD;
   }
 
-  MPI_Comm_size(comm, &nprocs_);
-  MPI_Comm_rank(comm, &my_rank_);
+  CHECK_MPI(MPI_Comm_size(comm, &nprocs_));
+  CHECK_MPI(MPI_Comm_rank(comm, &my_rank_));
 }
 
 MPIInstance::~MPIInstance() {
   int finalized{0};
-  MPI_Finalized(&finalized);
+  CHECK_MPI(MPI_Finalized(&finalized));
   if (!finalized && init_in_this_class) {
-    MPI_Finalize();
+    CHECK_MPI(MPI_Finalize());
   }
 }
 

@@ -268,17 +268,17 @@ class HostInterface {
       if (i == my_pe_) {
         continue;
       }
-      MPI_Put(&flush_val, 1, MPI_UNSIGNED, i, 0, 1, MPI_UNSIGNED, hdp_win);
+      CHECK_MPI(MPI_Put(&flush_val, 1, MPI_UNSIGNED, i, 0, 1, MPI_UNSIGNED, hdp_win));
     }
-    MPI_Win_flush_all(hdp_win);
+    CHECK_MPI(MPI_Win_flush_all(hdp_win));
 #endif // USE_HDP_FLUSH
   }
 
   __host__ void flush_remote_hdp(int pe) {
 #if defined USE_HDP_FLUSH
     unsigned flush_val{HdpPolicy::HDP_FLUSH_VAL};
-    MPI_Put(&flush_val, 1, MPI_UNSIGNED, pe, 0, 1, MPI_UNSIGNED, hdp_win);
-    MPI_Win_flush(pe, hdp_win);
+    CHECK_MPI(MPI_Put(&flush_val, 1, MPI_UNSIGNED, pe, 0, 1, MPI_UNSIGNED, hdp_win));
+    CHECK_MPI(MPI_Win_flush(pe, hdp_win));
 #endif // USE_HDP_FLUSH
   }
 

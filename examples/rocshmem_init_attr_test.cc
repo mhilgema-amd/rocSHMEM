@@ -72,12 +72,12 @@ int main (int argc, char **argv)
     rocshmem_init_attr_t attr;
     int provided;
 
-    MPI_Init_thread (&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    CHECK_MPI(MPI_Init_thread (&argc, &argv, MPI_THREAD_MULTIPLE, &provided));
     if (provided != MPI_THREAD_MULTIPLE) {
       std::cerr << "MPI_THREAD_MULTIPLE support disabled.\n";
     }
-    MPI_Comm_rank (MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size (MPI_COMM_WORLD, &world_nranks);
+    CHECK_MPI(MPI_Comm_rank (MPI_COMM_WORLD, &world_rank));
+    CHECK_MPI(MPI_Comm_size (MPI_COMM_WORLD, &world_nranks));
 
     // Create two disjoint groups of processes, each
     // one creating a unique rocshmem environment independent
@@ -87,34 +87,34 @@ int main (int argc, char **argv)
     int rank, nranks;
 
     MPI_Comm_split(MPI_COMM_WORLD, color, world_rank, &newcomm);
-    MPI_Comm_rank (newcomm, &rank);
-    MPI_Comm_size (newcomm, &nranks);
+    CHECK_MPI(MPI_Comm_rank (newcomm, &rank));
+    CHECK_MPI(MPI_Comm_size (newcomm, &nranks));
 
     if (rank == 0) {
       ret = rocshmem_get_uniqueid (&uid);
       if (ret != ROCSHMEM_SUCCESS) {
         std::cout << rank << ": Error in rocshmem_get_uniqueid. Aborting.\n";
-        MPI_Abort (MPI_COMM_WORLD, ret);
+        CHECK_MPI(MPI_Abort (MPI_COMM_WORLD, ret));
       }
     }
 
-    MPI_Bcast (&uid, sizeof(rocshmem_uniqueid_t), MPI_BYTE, 0, newcomm);
+    CHECK_MPI(MPI_Bcast (&uid, sizeof(rocshmem_uniqueid_t), MPI_BYTE, 0, newcomm));
     ret = rocshmem_set_attr_uniqueid_args(rank, nranks, &uid, &attr);
     if (ret != ROCSHMEM_SUCCESS) {
       std::cout << rank << ": Error in rocshmem_set_attr_uniqueid_args. Aborting.\n";
-      MPI_Abort (MPI_COMM_WORLD, ret);
+      CHECK_MPI(MPI_Abort (MPI_COMM_WORLD, ret));
     }
 
     ret = rocshmem_init_attr(ROCSHMEM_INIT_WITH_UNIQUEID, &attr);
     if (ret != ROCSHMEM_SUCCESS) {
       std::cout << rank << ": Error in rocshmem_init_attr. Aborting.\n";
-      MPI_Abort (MPI_COMM_WORLD, ret);
+      CHECK_MPI(MPI_Abort (MPI_COMM_WORLD, ret));
     }
 
     std::cout << rank << ": rocshmem_init_attr SUCCESS\n";
 
     rocshmem_finalize();
-    MPI_Comm_free (&newcomm);
+    CHECK_MPI(MPI_Comm_free (&newcomm));
     MPI_Finalize();
     return 0;
 }

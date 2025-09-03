@@ -45,7 +45,7 @@ class ROTeamProxy {
               size_t num_elems = 1)
     : my_pe_(pe), team_size_(npes), proxy_{num_elems} {
 
-    MPI_Comm_dup(comm, &team_world_comm_);
+    CHECK_MPI(MPI_Comm_dup(comm, &team_world_comm_));
 
     new (proxy_.get()) ROTeam(backend, wrt_parent_.get(), wrt_world_.get(),
                               team_size_, my_pe_, team_world_comm_);
@@ -66,7 +66,7 @@ class ROTeamProxy {
   ~ROTeamProxy() {
     proxy_.get()->~ROTeam();
 
-    MPI_Comm_free(&team_world_comm_);
+    CHECK_MPI(MPI_Comm_free(&team_world_comm_));
   }
 
   /*

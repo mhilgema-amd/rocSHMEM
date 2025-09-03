@@ -29,6 +29,41 @@
 
 #include <memory>
 
+/*
+ * Utility to check for MPI errors
+ */
+#if defined (DEBUG)
+#define CHECK_MPI(call)                                                        \
+  do {                                                                         \
+    int my_status = call;                                                      \
+    char error_string[128];                                                    \
+    int len;                                                                   \
+    fprintf(stderr, "Calling MPI in %s at %s(%d)\n", __FUNCTION__, __FILE__,   \
+            __LINE__);                                                         \
+    fflush(stderr);                                                            \
+    if (my_status != MPI_SUCCESS) {                                            \
+      MPI_Error_string(my_status, error_string, &len);                         \
+      fprintf(stderr, "MPI error at %s:%d: %s\n", __FILE__, __LINE__,          \
+              error_string);                                                   \
+      exit(1);                                                                 \
+    }                                                                          \
+  } while (0)
+#else
+#define CHECK_MPI(call)                                                        \
+  do {                                                                         \
+    int my_status = call;                                                      \
+    char error_string[128];                                                    \
+    int len;                                                                   \
+    if (my_status != MPI_SUCCESS) {                                            \
+      MPI_Error_string(my_status, error_string, &len);                         \
+      fprintf(stderr, "MPI error at %s:%d: %s\n", __FILE__, __LINE__,          \
+              error_string);                                                   \
+      exit(1);                                                                 \
+    }                                                                          \
+  } while (0)
+#endif
+
+
 /**
  * @file mpi_instance.hpp
  *

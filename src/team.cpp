@@ -84,7 +84,7 @@ __host__ Team::Team(Backend* handle, TeamInfo* team_info_wrt_parent,
       num_pes(_num_pes),
       my_pe(_my_pe) {
   if (_mpi_comm != MPI_COMM_NULL) {
-    MPI_Comm_dup (_mpi_comm, &mpi_comm);
+    CHECK_MPI(MPI_Comm_dup (_mpi_comm, &mpi_comm));
   }
 }
 
@@ -117,7 +117,7 @@ __host__ __device__ int Team::get_pe_in_my_team(int pe_in_world) {
 
 __host__ Team::~Team() {
   if (mpi_comm != MPI_COMM_NULL)
-    MPI_Comm_free (&mpi_comm);
+    CHECK_MPI(MPI_Comm_free (&mpi_comm));
 }
 
 }  // namespace rocshmem

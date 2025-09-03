@@ -113,7 +113,7 @@ rocshmem_ctx_t ROCSHMEM_HOST_CTX_DEFAULT;
 [[maybe_unused]] __host__ static void inline library_init_subcomm(TcpBootstrap *bootstrap, int nranks, int rank) {
   int initialized;
   int world_size = -1;
-  MPI_Initialized(&initialized);
+  CHECK_MPI(MPI_Initialized(&initialized));
 
   if (!initialized) {
     // This is an Open MPI specific solution to retrieve the number of
@@ -131,7 +131,7 @@ rocshmem_ctx_t ROCSHMEM_HOST_CTX_DEFAULT;
       abort();
     }
   } else {
-    MPI_Comm_size (MPI_COMM_WORLD, &world_size);
+    CHECK_MPI(MPI_Comm_size (MPI_COMM_WORLD, &world_size));
   }
 
   if (world_size == nranks) {
@@ -140,8 +140,8 @@ rocshmem_ctx_t ROCSHMEM_HOST_CTX_DEFAULT;
     MPI_Group world_group;
     int world_rank;
 
-    MPI_Comm_rank (MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_group (MPI_COMM_WORLD, &world_group);
+    CHECK_MPI(MPI_Comm_rank (MPI_COMM_WORLD, &world_rank));
+    CHECK_MPI(MPI_Comm_group (MPI_COMM_WORLD, &world_group));
 
     int *inc_ranks = new int[nranks];
     inc_ranks[rank] = world_rank;
@@ -150,14 +150,14 @@ rocshmem_ctx_t ROCSHMEM_HOST_CTX_DEFAULT;
 
     MPI_Group sub_group;
     MPI_Comm sub_comm;
-    MPI_Group_incl (world_group, nranks, inc_ranks, &sub_group);
-    MPI_Comm_create_group (MPI_COMM_WORLD, sub_group, 1234, &sub_comm);
+    CHECK_MPI(MPI_Group_incl (world_group, nranks, inc_ranks, &sub_group));
+    CHECK_MPI(MPI_Comm_create_group (MPI_COMM_WORLD, sub_group, 1234, &sub_comm));
 
     library_init(sub_comm);
 
-    MPI_Group_free (&sub_group);
-    MPI_Group_free (&world_group);
-    MPI_Comm_free (&sub_comm);
+    CHECK_MPI(MPI_Group_free (&sub_group));
+    CHECK_MPI(MPI_Group_free (&world_group));
+    CHECK_MPI(MPI_Comm_free (&sub_comm));
     delete[] inc_ranks;
   }
 }
@@ -464,7 +464,7 @@ __host__ int rocshmem_team_split_strided(
       color = 1;
     }
 
-    MPI_Comm_split(parent_team_obj->mpi_comm, color, my_pe_in_world, &team_comm);
+    CHECK_MPI(MPI_Comm_split(parent_team_obj->mpi_comm, color, my_pe_in_world, &team_comm));
   }
   /**
    * Allocate new team for GPU-inittiated communication with backend-specific
@@ -485,7 +485,7 @@ __host__ int rocshmem_team_split_strided(
   }
 
   if (team_comm != MPI_COMM_NULL) {
-    MPI_Comm_free (&team_comm);
+    CHECK_MPI(MPI_Comm_free (&team_comm));
   }
   return 0;
 }
