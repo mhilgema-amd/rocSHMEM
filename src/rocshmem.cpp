@@ -94,12 +94,27 @@ rocshmem_ctx_t ROCSHMEM_HOST_CTX_DEFAULT;
 
   mpi_instance = new MPIInstance(comm);
 
-#if defined(USE_GDA)
-  CHECK_HIP(hipHostMalloc(&backend, sizeof(GDABackend)));
-  backend = new (backend) GDABackend(comm);
-#elif defined(USE_RO)
+#if defined (DEBUG)
+  /*
+  * Attach a GDB instance 
+  */
+ char hostname[256];
+ int my_rank;
+ gethostname(hostname, sizeof(hostname));
+ pid_t pid = getpid();
+ CHECK_MPI(MPI_Comm_rank(comm, &my_rank));
+ fprintf(stdout, "rank %d:\tPID %d on %s\t\tgdb /proc/%d/exe %d\n",
+         my_rank, pid, hostname, pid, pid);
+ fflush(stdout);
+ sleep(20);
+#endif
+
+#ifdef USE_RO
   CHECK_HIP(hipHostMalloc(&backend, sizeof(ROBackend)));
   backend = new (backend) ROBackend(comm);
+#elif defined(USE_GDA)
+  CHECK_HIP(hipHostMalloc(&backend, sizeof(GDABackend)));
+  backend = new (backend) GDABackend(comm);
 #elif defined(USE_IPC)
   CHECK_HIP(hipHostMalloc(&backend, sizeof(IPCBackend)));
   backend = new (backend) IPCBackend(comm);
