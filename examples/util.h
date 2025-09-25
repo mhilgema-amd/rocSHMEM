@@ -39,14 +39,37 @@
     }
 
 static int get_launcher_local_rank() {
-    char *local_rank_str = nullptr;
-
-    local_rank_str = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-    if (nullptr != local_rank_str) {
-        return atoi(local_rank_str);
+    int rank, local_rank, is_initialized = 0, ierr;
+ 
+    MPI_Initialized(&is_initialized);
+ 
+    if (! is_initialized) {
+        int provided;
+        MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
     }
 
-    return -1;
+    /*
+     * Find the local MPI rank number
+     */
+    MPI_Comm local_comm;
+    ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (ierr != MPI_SUCCESS) {
+        return -1;
+    }
+    ierr = MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED,
+                                rank, MPI_INFO_NULL, &local_comm);
+    if (ierr != MPI_SUCCESS) {
+        return -1;
+    }
+
+    ierr = MPI_Comm_rank(local_comm, &local_rank);
+    if (ierr != MPI_SUCCESS) {
+        return -1;
+    }
+
+    MPI_Comm_free(&local_comm);
+
+    return local_rank;
 }
 
 #endif /* __ROCSHMEM_EXAMPLES_UTIL_H__ */
