@@ -349,8 +349,20 @@ __host__ void * rocshmem_ptr(void * dest, int pe){
   backend->~Backend();
   CHECK_HIP(hipHostFree(backend));
 
-  if (bootstr == nullptr)
+  if (bootstr == nullptr) {
     delete mpi_instance;
+
+    /*
+     * MPI_Init() is also called in the rank determination,
+     * we need to check if it has been shutdown and
+     * call MPI_Finalize() again outside of the 
+     * mpi_instance
+     */
+    int is_finalized = 0;
+    MPI_Finalized(&is_finalized);
+    if (is_finalized)
+      MPI_Finalize();
+  }
 
   if (bootstr != nullptr)
     delete bootstr;
